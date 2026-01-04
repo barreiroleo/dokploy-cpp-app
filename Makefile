@@ -1,4 +1,4 @@
-.PHONY: gen build clean docker-build docker-run docker-stop help
+.PHONY: gen build clean docker-build docker-run docker-stop deploy help
 
 BUILD_DIR = builddir
 IMAGE_NAME = echo-app
@@ -13,6 +13,7 @@ help:
 	@echo "  docker-build - Build Docker image"
 	@echo "  docker-run   - Run Docker container (stops previous if running)"
 	@echo "  docker-stop  - Stop running Docker container"
+	@echo "  deploy       - Deploy by creating and pushing a tag"
 	@echo "  help         - Show this help message"
 
 gen:
@@ -32,3 +33,6 @@ docker-stop:
 
 docker-run: docker-stop
 	docker run --rm -p $(PORT):$(PORT) --name $(CONTAINER_NAME) $(IMAGE_NAME)
+
+deploy:
+	@./scripts/deploy.py
