@@ -1,4 +1,5 @@
-FROM ubuntu:24.04
+# Build stage
+FROM ubuntu:24.04 AS builder
 
 RUN apt-get update && apt-get install -y \
     g++ \
@@ -12,11 +13,18 @@ WORKDIR /app
 
 COPY meson.build .
 COPY main.cpp .
-COPY index.html .
 
 RUN meson setup builddir && \
     meson compile -C builddir
 
+# Final stage
+FROM ubuntu:24.04
+
+WORKDIR /app
+
+COPY --from=builder /app/builddir/echo-app .
+COPY index.html .
+
 EXPOSE 8080
 
-CMD ["./builddir/echo-app"]
+CMD ["./echo-app"]

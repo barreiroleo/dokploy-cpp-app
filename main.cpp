@@ -104,14 +104,18 @@ void handle_client(int client_socket)
     std::string request_str(buffer.data());
     HttpRequest request = parse_request(request_str);
 
+    std::cout << "Received " << request.method << " request for " << request.path << std::endl;
+
     std::string response;
 
     if (request.method == "GET" && request.path == "/") {
         std::string html_content = read_file("index.html");
         if (html_content.empty()) {
             response = create_response(404, "Not Found", "text/plain", "index.html not found");
+            std::cout << "Error: index.html not found" << std::endl;
         } else {
             response = create_response(200, "OK", "text/html", html_content);
+            std::cout << "Served index.html" << std::endl;
         }
     } else if (request.method == "POST" && request.path == "/echo") {
         std::string message;
@@ -121,8 +125,10 @@ void handle_client(int client_socket)
 
         std::string json_response = "{\"echo\": \"" + message + "\"}";
         response = create_response(200, "OK", "application/json", json_response);
+        std::cout << "Echoed message: " << message << std::endl;
     } else {
         response = create_response(404, "Not Found", "text/plain", "Not Found");
+        std::cout << "404 Not Found: " << request.method << " " << request.path << std::endl;
     }
 
     write(client_socket, response.c_str(), response.length());
@@ -131,15 +137,19 @@ void handle_client(int client_socket)
 
 int main()
 {
+    // Disable buffering for stdout and stderr to see logs immediately in Docker
+    std::cout.setf(std::ios::unitbuf);
+    std::cerr.setf(std::ios::unitbuf);
+
     int server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket < 0) {
-        std::cerr << "Error creating socket\n";
+        std::cerr << "Error creating socket" << std::endl;
         return 1;
     }
 
     int opt = 1;
     if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-        std::cerr << "Error setting socket options\n";
+        std::cerr << "Error setting socket options" << std::endl;
         close(server_socket);
         return 1;
     }
@@ -150,18 +160,18 @@ int main()
     server_addr.sin_port = htons(PORT);
 
     if (bind(server_socket, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr)) < 0) {
-        std::cerr << "Error binding socket\n";
+        std::cerr << "Error binding socket" << std::endl;
         close(server_socket);
         return 1;
     }
 
     if (listen(server_socket, 10) < 0) {
-        std::cerr << "Error listening on socket\n";
+        std::cerr << "Error listening on socket" << std::endl;
         close(server_socket);
         return 1;
     }
 
-    std::cout << "Echo server listening on port " << PORT << "...\n";
+    std::cout << "Echo server listening on port " << PORT << "..." << std::endl;
 
     while (true) {
         sockaddr_in client_addr {};
@@ -169,7 +179,7 @@ int main()
         int client_socket = accept(server_socket, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
 
         if (client_socket < 0) {
-            std::cerr << "Error accepting connection\n";
+            std::cerr << "Error accepting connection" << std::endl;
             continue;
         }
 
