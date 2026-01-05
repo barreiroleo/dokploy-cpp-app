@@ -1,7 +1,7 @@
 .PHONY: gen build clean docker-build docker-run docker-stop deploy help
 
-BUILD_DIR = builddir
-IMAGE_NAME = echo-app
+BUILD_DIR = build
+IMAGE_NAME = hello-app
 CONTAINER_NAME = echo-app-container
 PORT = 8080
 

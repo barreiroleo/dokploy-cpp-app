@@ -1,1 +1,10 @@
-.cache/clangd/index
+build/
+subprojects/*
+!subprojects/*.wrap
+!subprojects/*.wraplock
+
+.cache/
+.git/
+.gitignore
+*.md
+*~

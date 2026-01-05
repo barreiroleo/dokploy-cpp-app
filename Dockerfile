@@ -11,20 +11,21 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
+COPY Makefile .
 COPY meson.build .
-COPY main.cpp .
+COPY subprojects/*.wrap subprojects/
+COPY src/ src/
 
-RUN meson setup builddir && \
-    meson compile -C builddir
+RUN make gen build
 
 # Final stage
 FROM ubuntu:24.04
 
 WORKDIR /app
 
-COPY --from=builder /app/builddir/echo-app .
-COPY index.html .
+COPY --from=builder /app/build/hello-app .
+COPY www/ www/
 
 EXPOSE 8080
 
-CMD ["./echo-app"]
+CMD ["./hello-app"]
