@@ -26,6 +26,4 @@ WORKDIR /app
 COPY --from=builder /app/build/hello-app .
 COPY www/ www/
 
-EXPOSE 8080
-
 CMD ["./hello-app"]

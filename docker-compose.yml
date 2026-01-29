@@ -1,0 +1,27 @@
+# Local development: docker compose up -d --build
+# Swarm deployment: docker stack deploy -c docker-compose.yml hello-cpp
+
+services:
+  hello-app:
+    build: .
+    image: ghcr.io/barreiroleo/dokploy-cpp-app:${GIT_COMMIT_HASH:-latest}
+    container_name: hello-app
+    restart: unless-stopped
+    networks:
+      - proxy
+    ports:
+      - 8080:8080
+    secrets:
+      - foo-secret
+    environment:
+      - APP_SECRET=/run/secrets/foo-secret
+      - APP_VERSION=${APP_VERSION}
+
+networks:
+  proxy:
+    external: true
+
+secrets:
+  foo-secret:
+    external: false
+    file: .foo-secret

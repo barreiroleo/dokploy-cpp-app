@@ -2,19 +2,7 @@
 
 BUILD_DIR = build
 IMAGE_NAME = hello-app
-CONTAINER_NAME = echo-app-container
 PORT = 8080
-
-help:
-	@echo "Available targets:"
-	@echo "  gen          - Setup Meson build directory"
-	@echo "  build        - Compile the application"
-	@echo "  clean        - Remove build directory"
-	@echo "  docker-build - Build Docker image"
-	@echo "  docker-run   - Run Docker container (stops previous if running)"
-	@echo "  docker-stop  - Stop running Docker container"
-	@echo "  deploy       - Deploy by creating and pushing a tag"
-	@echo "  help         - Show this help message"
 
 gen:
 	meson setup $(BUILD_DIR)
@@ -26,13 +14,13 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 docker-build:
-	docker build -t $(IMAGE_NAME) .
+	@docker compose build
 
-docker-stop:
-	@docker stop $(CONTAINER_NAME) 2>/dev/null || true
+run:
+	@docker compose up -d --build
 
-docker-run: docker-stop
-	docker run --rm -p $(PORT):$(PORT) --name $(CONTAINER_NAME) $(IMAGE_NAME)
+stop:
+	@docker compose down
 
 deploy:
 	@./scripts/deploy.py

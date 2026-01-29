@@ -1,20 +1,34 @@
 #include <httplib.h>
+
+#include <format>
 #include <fstream>
-#include <iostream>
-#include <sstream>
-#include <string>
 
 constexpr int PORT = 8080;
 
-std::string read_file(const std::string& filename)
+std::string read_file(std::string_view filename)
 {
-    std::ifstream file(filename);
+    std::ifstream file(filename.data());
     if (!file.is_open()) {
         return "";
     }
     std::stringstream buffer;
     buffer << file.rdbuf();
     return buffer.str();
+}
+
+auto get_app_version() -> std::optional<std::string>
+{
+    std::string_view app_version = std::getenv("APP_VERSION");
+    return app_version.empty() ? std::nullopt : std::make_optional<std::string>(app_version);
+}
+
+auto get_app_secret() -> std::optional<std::string>
+{
+    std::string_view app_secret_file = std::getenv("APP_SECRET");
+    if ( app_secret_file.empty() ) {
+        return std::nullopt;
+    }
+    return read_file(app_secret_file);
 }
 
 int main()
@@ -28,7 +42,7 @@ int main()
     // GET / - Serve index.html from ./www directory
     server.Get("/", [](const httplib::Request& req, httplib::Response& res) {
         std::cout << "Received GET request for /" << std::endl;
-        
+
         std::string html_content = read_file("./www/index.html");
         if (html_content.empty()) {
             res.status = 404;
@@ -38,6 +52,13 @@ int main()
             res.set_content(html_content, "text/html");
             std::cout << "Served index.html from ./www directory" << std::endl;
         }
+    });
+
+    // 404 handler
+    server.set_error_handler([](const httplib::Request& req, httplib::Response& res) {
+        std::cout << "404 Not Found: " << req.method << " " << req.path << std::endl;
+        res.status = 404;
+        res.set_content("Not Found", "text/plain");
     });
 
     // POST /echo - Echo back the message
@@ -54,14 +75,19 @@ int main()
         std::cout << "Echoed message: " << message << std::endl;
     });
 
-    // 404 handler
-    server.set_error_handler([](const httplib::Request& req, httplib::Response& res) {
-        std::cout << "404 Not Found: " << req.method << " " << req.path << std::endl;
-        res.status = 404;
-        res.set_content("Not Found", "text/plain");
+    // GET /healthcheck - Serve the HEALTHCHECK value
+    server.Get("/healthcheck", [](const httplib::Request& req, httplib::Response& res) {
+        std::cout << "Received GET request for /healthcheck" << std::endl;
+
+        std::string response = std::format("{{\"status\": \"OK\"}}");
+        res.set_content(response, "application/json");
+        std::cout << "Healthcheck value served" << std::endl;
     });
 
-    std::cout << "Echo server listening on port " << PORT << "..." << std::endl;
+    std::cout << "Starting echo server...\n";
+    std::cout << std::format("- Listening on port {}\n", PORT);
+    std::cout << std::format("- App version {}\n", get_app_version().value_or("Err"));
+    std::cout << std::format("- App secret: {}\n", get_app_secret().value_or("Err"));
 
     if (!server.listen("0.0.0.0", PORT)) {
         std::cerr << "Error starting server on port " << PORT << std::endl;
